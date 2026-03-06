@@ -1,6 +1,6 @@
 # Therapy Notes Demo
 
-This demo shows how to use LangSmith to evaluate an LLM pipeline end-to-end. The pipeline takes a therapy session transcript and generates structured clinical notes. We then run automated evals to check note quality across three different prompt versions.
+This demo shows how to use LangSmith to evaluate an LLM pipeline end-to-end. The pipeline takes a therapy session transcript and generates structured clinical notes. We then run automated evals to check note quality across three different prompt versions and show how to run certain evals on a subset of the dataset. 
 
 ## What this demo does
 
@@ -68,7 +68,7 @@ The other two values (`LANGSMITH_TRACING=true` and `LANGSMITH_PROJECT`) can stay
 
 ## Running the demo
 
-### Step 1 — Upload the golden dataset
+### Step 1 — Upload the golden dataset or pull from existing LangSmith golden dataset 
 
 ```bash
 uv run python upload_dataset.py
