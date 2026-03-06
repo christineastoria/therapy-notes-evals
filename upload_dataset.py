@@ -1,4 +1,21 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from langsmith import Client
+
+# ---------------------------------------------------------------------------
+# Option A: use an existing LangSmith dataset (skip upload entirely)
+#
+# If your golden examples already live in LangSmith, point run_experiments.py
+# at that dataset name and delete everything below. You can also pull the
+# examples locally for inspection:
+#
+#   client = Client()
+#   dataset = client.read_dataset(dataset_name="Your Existing Dataset Name")
+#   examples = list(client.list_examples(dataset_id=dataset.id))
+#   for ex in examples:
+#       print(ex.inputs, ex.outputs, ex.metadata)
+# ---------------------------------------------------------------------------
 
 DATASET_NAME = "Therapy Notes - Golden Examples"
 

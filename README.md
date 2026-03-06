@@ -1,6 +1,6 @@
 # Therapy Notes Demo
 
-Single LLM call (OpenAI) traced with LangSmith that generates therapist notes from a session transcript. Evaluates across three prompt versions for hallucination, relevance, and template format conformity.
+Single LLM call (OpenAI) traced with LangSmith that generates therapist notes from a session transcript. Evaluates across three prompt versions for hallucination, relevance, and template format conformity (last eval is per-template).
 
 ## Setup
 
@@ -45,7 +45,7 @@ source .env
 
 ## Usage
 
-**1. Upload the golden dataset** (6 examples, 2 per template type):
+**1. Upload the golden dataset or use existing golden dataset** (6 examples, 2 per template type):
 ```bash
 uv run python upload_dataset.py
 ```

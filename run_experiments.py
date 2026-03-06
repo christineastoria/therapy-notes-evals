@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from typing import TypedDict, Annotated
 
 from langsmith import Client, evaluate
@@ -69,6 +72,9 @@ def relevance(run, example):
 
 
 def template_1_conformity(run, example):
+    inputs = example.inputs if hasattr(example, "inputs") else example.get("inputs", {})
+    if inputs.get("template_type") != 1:
+        return {"score": None, "comment": "n/a"}
     outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {})
     grade = _conformity_judge.invoke([{
         "role": "user",
@@ -82,6 +88,9 @@ def template_1_conformity(run, example):
 
 
 def template_2_conformity(run, example):
+    inputs = example.inputs if hasattr(example, "inputs") else example.get("inputs", {})
+    if inputs.get("template_type") != 2:
+        return {"score": None, "comment": "n/a"}
     outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {})
     grade = _conformity_judge.invoke([{
         "role": "user",
@@ -95,6 +104,9 @@ def template_2_conformity(run, example):
 
 
 def template_3_conformity(run, example):
+    inputs = example.inputs if hasattr(example, "inputs") else example.get("inputs", {})
+    if inputs.get("template_type") != 3:
+        return {"score": None, "comment": "n/a"}
     outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {})
     grade = _conformity_judge.invoke([{
         "role": "user",
@@ -105,13 +117,6 @@ def template_3_conformity(run, example):
         ),
     }])
     return {"score": 1 if grade["follows_template"] else 0, "comment": grade["reasoning"]}
-
-
-TEMPLATE_CONFORMITY_EVALS = {
-    1: template_1_conformity,
-    2: template_2_conformity,
-    3: template_3_conformity,
-}
 
 
 # ---------------------------------------------------------------------------
@@ -135,46 +140,24 @@ def make_run_fn(prompt_version: str):
 # ---------------------------------------------------------------------------
 
 def main():
-    ls_client = Client()
-
-    # Fetch all examples once and group by template type
-    all_examples = list(ls_client.list_examples(dataset_name=DATASET_NAME))
-    template_examples = {
-        t: [e for e in all_examples if e.metadata.get("template_type") == t]
-        for t in [1, 2, 3]
-    }
-    print(f"Dataset: '{DATASET_NAME}' — {len(all_examples)} total examples")
-    for t, examples in template_examples.items():
-        print(f"  Template {t}: {len(examples)} examples")
+    all_examples = list(Client().list_examples(dataset_name=DATASET_NAME))
+    print(f"Dataset: '{DATASET_NAME}' — {len(all_examples)} examples")
 
     for version in ["v1", "v2", "v3"]:
-        print(f"\n{'=' * 60}")
-        print(f"Prompt version: {version}")
-        print("=" * 60)
-
-        run_fn = make_run_fn(version)
-
-        # -- Experiment 1: Hallucination + Relevance on full dataset --
-        print(f"\n[{version}] Running hallucination + relevance on all {len(all_examples)} examples...")
+        print(f"\n[{version}] Running experiment...")
         evaluate(
-            run_fn,
+            make_run_fn(version),
             data=DATASET_NAME,
-            evaluators=[hallucination, relevance],
+            evaluators=[
+                hallucination,
+                relevance,
+                template_1_conformity,
+                template_2_conformity,
+                template_3_conformity,
+            ],
             experiment_prefix=f"therapy-notes-{version}",
-            metadata={"prompt_version": version, "eval_type": "core"},
+            metadata={"prompt_version": version},
         )
-
-        # -- Experiments 2–4: Template conformity on filtered subsets --
-        for t, evaluator in TEMPLATE_CONFORMITY_EVALS.items():
-            examples = template_examples[t]
-            print(f"[{version}] Running template-{t} conformity on {len(examples)} examples...")
-            evaluate(
-                run_fn,
-                data=examples,
-                evaluators=[evaluator],
-                experiment_prefix=f"therapy-notes-{version}-template-{t}",
-                metadata={"prompt_version": version, "eval_type": "template_conformity", "template_type": t},
-            )
 
     print("\nAll experiments complete. View results at https://smith.langchain.com")
 
